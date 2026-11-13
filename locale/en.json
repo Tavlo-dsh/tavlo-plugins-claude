@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Claude Code",
+    "description": "Run the local Claude Code through the Claude Agent SDK as a DSH model provider, with its full harness."
+  }
+}

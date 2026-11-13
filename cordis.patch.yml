@@ -1,0 +1,5 @@
+# Adds the `claude-code` model provider to DSH. Every field is optional; see README.
+- insert:
+    - id: tavlo-claude
+      name: tavlo-plugins-claude
+      config: {}

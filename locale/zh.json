@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Claude Code",
+    "description": "通过 Claude Agent SDK 运行本机 Claude Code，作为 DSH 的模型提供方使用，保留完整的 Claude harness。"
+  }
+}
