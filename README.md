@@ -1,4 +1,4 @@
-# tavlo-plugins-claude
+# dsh-plugin-claude
 
 DeepSeek Harness（DSH）插件：通过 [Claude Agent SDK](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) 运行**本机的 Claude Code**，把它作为模型提供方 `claude-code` 接入 DSH。
 
@@ -8,10 +8,19 @@ DeepSeek Harness（DSH）插件：通过 [Claude Agent SDK](https://www.npmjs.co
 
 ## 安装
 
+使用 npm 包安装：
+
 ```bash
+dsh plugin --profile web add dsh-plugin-claude
+```
+
+从源码安装：
+
+```bash
+cd /path/to/tavlo-plugins-claude
 pnpm install
 pnpm build
-dsh plugin --profile web add F:/github/tavlo-dsh-plugins/tavlo-plugins-claude
+dsh plugin --profile web add "$(pwd)"
 ```
 
 安装后在模型菜单里选择 **Claude Code**。
