@@ -110,6 +110,8 @@ pnpm build
 
 ## npm 发布
 
+已于 2026-11-17 绑定 npm Trusted Publisher；[GitHub Actions 验证](https://github.com/Tavlo-dsh/tavlo-plugins-claude/actions/runs/43995011574)中的 82 项测试、类型检查、构建和安装包检查通过。当前 npm 版本仍为 `0.1.0`，后续版本可使用下述流程发布。
+
 `.github/workflows/publish.yml` 先执行类型检查、测试、构建和安装包检查，再通过 npm Trusted Publishing（OIDC）发布，不使用长期 npm token。推送与 `package.json` 版本匹配的标签会触发发布；也可在 GitHub Actions 手动运行，勾选 `publish` 时必须从 `main` 发布，不勾选则仅验证。发布前应先修改包版本，已存在的 npm 版本不能重复发布。
 
 首次启用时，在 npm 包设置的 Trusted Publisher 中选择 GitHub Actions：组织 `Tavlo-dsh`，仓库 `tavlo-plugins-claude`，工作流文件 `publish.yml`，环境名称留空，并允许直接发布。也可通过 `npm trust github dsh-plugin-claude --repo Tavlo-dsh/tavlo-plugins-claude --file publish.yml --allow-publish` 完成绑定；npm 可能要求维护者完成账户双重认证。
