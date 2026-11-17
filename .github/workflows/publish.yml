@@ -1,0 +1,79 @@
+name: Publish npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish this version to npm after validation
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Validate package contents
+        run: npm pack --dry-run
+
+  publish:
+    name: Publish with npm trusted publishing
+    needs: validate
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install npm with trusted publishing support
+        run: npm install --global npm@11.16.0
+      - run: pnpm install --frozen-lockfile
+      - name: Verify the release version
+        env:
+          RELEASE_REF: ${{ github.ref }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+          const ref = process.env.RELEASE_REF
+          if (ref.startsWith('refs/tags/') && ref !== `refs/tags/v${version}`) {
+            throw new Error(`Release tag ${ref} does not match package version ${version}`)
+          }
+          if (!ref.startsWith('refs/tags/') && ref !== 'refs/heads/main') {
+            throw new Error('Manual publishing must run from main')
+          }
+          NODE
+      - name: Publish npm package
+        run: npm publish --provenance --access public
