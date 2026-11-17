@@ -1,12 +1,18 @@
 # dsh-plugin-claude
 
+[![npm version](https://img.shields.io/npm/v/dsh-plugin-claude.svg)](https://www.npmjs.com/package/dsh-plugin-claude)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-plugin-claude.svg)](https://www.npmjs.com/package/dsh-plugin-claude)
+[![license](https://img.shields.io/npm/l/dsh-plugin-claude.svg)](https://www.npmjs.com/package/dsh-plugin-claude)
+
 DeepSeek Harness（DSH）插件：通过 [Claude Agent SDK](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) 运行**本机的 Claude Code**，把它作为模型提供方 `claude-code` 接入 DSH。
 
 与 [dsh-ccgui](https://github.com/zhukunpenglinyutong/dsh-ccgui) 走 ACP 不同，这里直接用官方 SDK 驱动 Claude Code 进程。Claude 的完整 harness 都保留在 Claude 一侧，包括 agent loop、内置工具、`settings.json`、MCP、skills、hooks、subagents、自动压缩以及 slash 命令。DSH 负责展示对话、把每次工具调用显示成卡片、处理权限审批与提问。
 
-设计说明见 [docs/design.md](docs/design.md)。本插件只做服务端接入；前端界面由统一的 UI 插件（`tavlo-plugins-ui`）提供。
+本插件只做服务端接入；前端界面由统一的 UI 插件（`tavlo-plugins-ui`）提供。
 
 ## 安装
+
+需要 Node.js 22+、DSH `>=0.2.2-rc.1 <0.3.0`。本机已安装 Claude Code 时直接使用；未安装时使用 SDK 自带的二进制。
 
 使用 npm 包安装：
 
@@ -45,6 +51,23 @@ dsh plugin --profile web add "$(pwd)"
 
 在 DSH 的 cordis 配置里修改 `tavlo-claude` 条目：
 
+```yaml
+- id: tavlo-claude
+  name: dsh-plugin-claude
+  config:
+    executable: ''
+    permissionMode: ''
+    inheritCredentials: true
+    env: {}
+    cancelGraceMs: 10000
+    disposeGraceMs: 3000
+    goalBlockedAfterConsecutiveRounds: 3
+    auxiliary:
+      enabled: true
+      routes: []
+      discovery: true
+```
+
 | 字段 | 默认值 | 说明 |
 | --- | --- | --- |
 | `executable` | `''` | `claude` 的路径；为空时自动查找。 |
@@ -76,6 +99,7 @@ Claude Code 不处理 `purpose` 非空的辅助请求（它们会污染用户真
 
 ```yaml
 - id: tavlo-claude
+  name: dsh-plugin-claude
   config:
     auxiliary:
       # 优先尝试的路由，按顺序；留空则直接自动发现。
@@ -96,7 +120,7 @@ Claude Code 不处理 `purpose` 非空的辅助请求（它们会污染用户真
 
 - DSH 自己的压缩、沙箱、fork 编辑历史对 Claude 不起作用。Claude 只读取自己的会话记录。
 - 只有 Claude 自己的工具调用会显示成卡片；subagent 内部的工具调用只体现在 Task 卡片的结果里。
-- Goal 桥接已实现本地 MCP 工具与回合转发；DSH 实机组合验收、subagent 状态与树等待等后续事项记录在 [docs/tasks/dsh-goal-and-subagent-integration.md](docs/tasks/dsh-goal-and-subagent-integration.md)。
+- Goal 桥接已实现本地 MCP 工具与回合转发；子代理状态与任务树尚未映射到 DSH。
 - 标题、摘要这类辅助模型请求会转发给其他供应商（见上面的 `auxiliary`）；如果没有任何可用路由，标题会退回 DSH 的兜底命名，并记录一条 warning。
 - DSH 审批卡片只提供“允许一次”，不会写入 Claude 的“始终允许”规则；需要长期放行的规则请写在 Claude 的 `settings.json` 里。
 
@@ -108,10 +132,5 @@ pnpm test
 pnpm build
 ```
 
-## npm 发布
+设计说明见 [docs/design.md](docs/design.md)。
 
-已于 2026-11-17 绑定 npm Trusted Publisher；[GitHub Actions 验证](https://github.com/Tavlo-dsh/tavlo-plugins-claude/actions/runs/43995011574)中的 82 项测试、类型检查、构建和安装包检查通过。当前 npm 版本仍为 `0.1.0`，后续版本可使用下述流程发布。
-
-`.github/workflows/publish.yml` 先执行类型检查、测试、构建和安装包检查，再通过 npm Trusted Publishing（OIDC）发布，不使用长期 npm token。推送与 `package.json` 版本匹配的标签会触发发布；也可在 GitHub Actions 手动运行，勾选 `publish` 时必须从 `main` 发布，不勾选则仅验证。发布前应先修改包版本，已存在的 npm 版本不能重复发布。
-
-首次启用时，在 npm 包设置的 Trusted Publisher 中选择 GitHub Actions：组织 `Tavlo-dsh`，仓库 `tavlo-plugins-claude`，工作流文件 `publish.yml`，环境名称留空，并允许直接发布。也可通过 `npm trust github dsh-plugin-claude --repo Tavlo-dsh/tavlo-plugins-claude --file publish.yml --allow-publish` 完成绑定；npm 可能要求维护者完成账户双重认证。
